@@ -1,5 +1,6 @@
 /*****************************************************************
 *    main.c - Gusty - began with code from https://codereview.stackexchange.com/questions/67746/simple-shell-in-c
+*    Modified by Karl Ast and Pratima Kandel
 ********************************************************************/
 
 #include <stdlib.h>
