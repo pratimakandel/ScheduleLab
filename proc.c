@@ -1,6 +1,7 @@
 /*****************************************************************
 *       proc.c - simplified for CPSC405 Lab by Gusty Cooper, University of Mary Washington
 *       adapted from MIT xv6 by Zhiyi Huang, hzy@cs.otago.ac.nz, University of Otago
+*		Modified by Karl Ast and Pratima Kandel
 ********************************************************************/
 
 #include <stdio.h>
