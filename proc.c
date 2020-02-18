@@ -296,7 +296,7 @@ Kill(int pid)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void
-scheduler(void)
+scheduler(int algorithm)
 {
 // A continous loop in real code
 //  if(first_sched) first_sched = 0;

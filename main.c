@@ -14,17 +14,18 @@
 
 void parseCmd(char* cmd, char** params, int *nparams);
 int executeCmd(char** params, int nparams);
+int algorithm = 0; //0 = round robin, 1 = fair
 
 #define MAX_COMMAND_LENGTH 100
 #define MAX_NUMBER_OF_PARAMS 10
 
 enum cmds        { FORK=0, SETPID,   SHOWPID,   WAIT,   EXIT,   SLEEP,   WAKEUP,   PS,   SCHEDULE,  SETSCHEDULE, TIMER,    HELP,   QUIT };
-char *cmdstr[] = {"fork", "Setpid", "currpid",  "wait", "exit", "sleep", "wakeup", "ps",   "schedule", "set_schedule", "timer", "help", "quit"};
+char *cmdstr[] = {"fork", "setpid", "currpid",  "wait", "exit", "sleep", "wakeup", "ps",   "schedule", "setschedule", "timer", "help", "quit"};
 
 int curr_proc_id = 0;
 
-int local_scheduler() {
-    scheduler();
+int local_scheduler(algorithm) {
+    scheduler(algorithm);
     struct proc *p = curr_proc;
     return p->pid;
 }
@@ -82,6 +83,8 @@ int executeCmd(char** params, int nparams)
             pid = curr_proc->pid;
         int fpid = Fork(pid);
         printf("pid: %d forked: %d\n", pid, fpid);
+		
+			
         break;
     case SETPID:
         if (nparams == 1)
@@ -139,8 +142,19 @@ int executeCmd(char** params, int nparams)
         procdump();
         break;
     case SCHEDULE:
-        pid = local_scheduler();
+        pid = local_scheduler(algorithm);
         printf("Scheduler selected pid: %d\n", pid);
+		printf("Using scheduling algorithm: \n");
+		switch (algorithm) {
+				case ROUNDROBIN:
+					printf("Round Robin\n");
+					break;
+				case FAIR:
+					printf("Proportional Share\n");
+					break;
+				default:
+					printf("Invalid scheduling algorithm.\n");
+		}
         break;
 
 	case SETSCHEDULE:
@@ -152,11 +166,12 @@ int executeCmd(char** params, int nparams)
 			
 			if (strcmp(params[1], "rr") == 0) {
 					printf("Scheduling algorithm set to round robin.\n");
+					algorithm = ROUNDROBIN;
 			}
 			else if (strcmp(params[1], "fair") == 0) {
 					printf("Scheduling algorithm set to proportional share.\n");
-			}
-			
+					algorithm = FAIR;
+			}			
 		}
 		break;
 
@@ -166,19 +181,20 @@ int executeCmd(char** params, int nparams)
         else {
             int quantums = atoi(params[1]);
             for (int i = 0; i < quantums; i++) {
-                pid = local_scheduler();
+                pid = local_scheduler(algorithm);
                 printf("Scheduler selected pid: %d\n", pid);
             }
         }
         break;
     case HELP:
-        printf("Commands: Fork, Wait, Exit, Dump, Setpid, Showpid, Sleep, Wakeup, Help\n");
+        printf("Commands: fork, setpid, currpid, currpid, wait, exit, sleep, wakeup, ps, schedule, setschedule, timer, help, quit\n");
+		printf("Make sure you are using all lowercase!\n");
         break;
     case QUIT:
         rc = 0;
         break;
     default:
-        printf("Invalid command! Enter Help to see commands.\n");
+        printf("Invalid command! Enter 'help' to see commands.\n");
     }
     
     return rc;
