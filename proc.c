@@ -12,6 +12,8 @@
 #include "proc.h"
 
 static void wakeup1(int chan);
+int arrivalt = 1;
+
 
 // Dummy lock routines. Not needed for lab
 void acquire(int *p) {
@@ -69,6 +71,25 @@ findproc(int pid)
       return p;
   return 0;
 }
+int dequeue_proc(){
+        struct proc *del;
+        //struct proc *s = head;
+        if( head == NULL){
+        return 0;
+
+        }
+        if( head ->next == NULL){
+           head = NULL;
+           return 0;
+        }else{
+        printf("dequeue\n");
+        del = head;
+        head = head -> next;
+        head -> prev = NULL;
+        return 1;
+        }
+
+}
 
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -119,7 +140,30 @@ userinit(void)
   curr_proc = p;
   return p->pid;
 }
+int enqueue_proc(struct proc *p) {
+    if ( p == NULL){
+          return 0;
+}
+    struct proc *s = head;
 
+            p->next = NULL;
+        if (s->next == NULL){
+                printf("edit here");
+                p->prev=s;
+                s->next=p;
+        }else{
+                printf("or here");
+        while (s->next != NULL){
+                s = s->next;
+
+        }
+
+        s->next = p;
+        p->prev = s;
+}
+
+return 1;
+}
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -146,6 +190,7 @@ Fork(int fork_proc_id)
   pid = np->pid;
   np->state = RUNNABLE;
   strcpy(np->name, fork_proc->name);
+  enqueue_proc(np);
   return pid;
 }
 
@@ -316,20 +361,32 @@ scheduler(int algorithm)
 	case ROUNDROBIN:
 	//Replace this with the proper round robin code
 	
-		curr_proc->state = RUNNABLE;
-		acquire(&ptable.lock);
-		
-		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-			if(p == curr_proc || p->state != RUNNABLE)
-			continue;
-
-			// Switch to chosen process.
-			curr_proc = p;
-			p->state = RUNNING;
-			break;
-		}
-		release(&ptable.lock);
-		break;		
+int burst = 0;
+  int new_burst = 0;
+  struct proc *s = head;
+  if (s == NULL){
+        return;
+  }
+  //do{
+      burst = s->bursttime;
+      s-> state = RUNNING;
+      if(burst > QUANTUM){
+        new_burst = burst - QUANTUM;
+         s->bursttime = new_burst;
+         struct proc *d = s;
+         //enqueue_proc(s);
+         
+         dequeue_proc();
+         //s->state = RUNNABLE;
+         s = s->next;
+         enqueue_proc(d);
+          
+       }else{
+          s->state = RUNNING;
+          dequeue_proc();
+          s=s->next;
+        }
+        //s = s->next;
 	
   
 	case FAIR:
@@ -375,4 +432,23 @@ procdump(void)
       printf("pid: %d, parent: %d state: %s, niceness: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness);
 }
 
+void print_proc(struct proc *p) {
+    if (p == NULL)
+        return;
+    printf("pid: %d, parent: %d state: %s arrival time: %d burst time: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->arrivaltime, p->bursttime);
+}
 
+void print_procs() {
+    printf("procs in queue:\n");
+    struct proc *p = head;
+    if( head == NULL){
+        return;
+     }else{
+    do {
+        print_proc(p);
+        p = p->next;
+    } while (p != NULL);
+
+    printf("\n");
+}
+}
