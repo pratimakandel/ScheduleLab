@@ -144,7 +144,7 @@ int executeCmd(char** params, int nparams)
     case SCHEDULE:
         pid = local_scheduler(algorithm);
         printf("Scheduler selected pid: %d\n", pid);
-		printf("Using scheduling algorithm: \n");
+		printf("Using scheduling algorithm: ");
 		switch (algorithm) {
 				case ROUNDROBIN:
 					printf("Round Robin\n");
@@ -164,11 +164,11 @@ int executeCmd(char** params, int nparams)
 		}
 		else {
 			
-			if (strcmp(params[1], "rr") == 0) {
+			if ((strcmp(params[1], "rr") == 0) || (strcmp(params[1], "0") == 0)) {
 					printf("Scheduling algorithm set to round robin.\n");
 					algorithm = ROUNDROBIN;
 			}
-			else if (strcmp(params[1], "fair") == 0) {
+			else if (strcmp(params[1], "fair") == 0  || (strcmp(params[1], "1") == 0)) {
 					printf("Scheduling algorithm set to proportional share.\n");
 					algorithm = FAIR;
 			}			

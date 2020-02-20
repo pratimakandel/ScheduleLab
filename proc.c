@@ -87,12 +87,21 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  
+  //Seed generation
+  time_t t;
+  srand((unsigned) time(&t));
+  
+  //Assign niceness
+  p->niceness = rand() % 40 - 20;
+
+
 
   p->context = (struct context*)malloc(sizeof(struct context));
   memset(p->context, 0, sizeof *p->context);
   p->context->pc = (uint)forkret;
   p->context->lr = (uint)trapret;
-
+ 
   return p;
 }
 
@@ -302,21 +311,54 @@ scheduler(int algorithm)
 //  if(first_sched) first_sched = 0;
 //  else sti();
 
-  curr_proc->state = RUNNABLE;
-
   struct proc *p;
+  switch(algorithm) {  
+	case ROUNDROBIN:
+	//Replace this with the proper round robin code
+	
+		curr_proc->state = RUNNABLE;
+		acquire(&ptable.lock);
+		
+		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+			if(p == curr_proc || p->state != RUNNABLE)
+			continue;
 
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p == curr_proc || p->state != RUNNABLE)
-      continue;
+			// Switch to chosen process.
+			curr_proc = p;
+			p->state = RUNNING;
+			break;
+		}
+		release(&ptable.lock);
+		break;		
+	
+  
+	case FAIR:
+		//Fair Scheduling
+		acquire(&ptable.lock);
+		
+		int nicest = LEAST_NICE;
+		
+		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+				if(p->state != RUNNABLE)
+				continue;	
 
-    // Switch to chosen process.
-    curr_proc = p;
-    p->state = RUNNING;
-    break;
+				if (nicest > p->niceness)
+					nicest = p->niceness;
+		}
+		
+		printf("Nicest %d\n", nicest);
+		
+		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+			if(p->niceness == nicest) {
+				// Switch to chosen process.
+				curr_proc = p;
+				p->state = RUNNING;
+				break;
+			}
+		}
+		release(&ptable.lock);
+		break;
   }
-  release(&ptable.lock);
 
 }
 
@@ -330,7 +372,7 @@ procdump(void)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->pid > 0)
-      printf("pid: %d, parent: %d state: %s\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state]);
+      printf("pid: %d, parent: %d state: %s, niceness: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness);
 }
 
 

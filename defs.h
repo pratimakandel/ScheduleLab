@@ -19,4 +19,5 @@ void            Wakeup(int);
 
 #define ROUNDROBIN 0
 #define FAIR 1
-
+#define LEAST_NICE 20
+#define MOST_NICE -19

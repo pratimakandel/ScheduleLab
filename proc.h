@@ -58,5 +58,6 @@ struct proc {
   char ofiles[NFILE];          // Open files
   char cwd[CWD];               // Current directory
   char name[PNAME];            // Process name (debugging)
+  int niceness;				   // A value from 20 to -19. Lower niceness is higher priority
 };
 
