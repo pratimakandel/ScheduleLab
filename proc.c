@@ -98,6 +98,7 @@ int dequeue_proc(){
 static struct proc*
 allocproc(void)
 {
+  srand(time(NULL));
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -108,7 +109,10 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  
+  p->next = NULL;
+  p->next = NULL;
+  p->bursttime = (rand() % 10) + 1;
+  p->arrivaltime = arrivalt++; 
   //Seed generation
   time_t t;
   srand((unsigned) time(&t));
@@ -138,6 +142,7 @@ userinit(void)
   strcpy(p->name, "userinit"); 
   p->state = RUNNING;
   curr_proc = p;
+  head = curr_proc;
   return p->pid;
 }
 int enqueue_proc(struct proc *p) {
