@@ -9,7 +9,7 @@
 #define PNAME        16  // chars in process name
 #define PGSIZE     4096  // size of initial pages for proc
 #define NCPU          8  // maximum number of CPUs
-
+#define QUANTUM       4
 
 // Per-CPU state
 struct cpu {
@@ -58,6 +58,10 @@ struct proc {
   char ofiles[NFILE];          // Open files
   char cwd[CWD];               // Current directory
   char name[PNAME];            // Process name (debugging)
-  int niceness;				   // A value from 20 to -19. Lower niceness is higher priority
+  int niceness;
+  struct proc *prev;
+  struct proc *next;
+  int bursttime;
+  int arrivaltime;// A value from 20 to -19. Lower niceness is higher priority
 };
 
