@@ -140,6 +140,7 @@ int executeCmd(char** params, int nparams)
         break;
     case PS:
         procdump();
+        print_procs();
         break;
     case SCHEDULE:
         pid = local_scheduler(algorithm);
