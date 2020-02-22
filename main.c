@@ -140,7 +140,14 @@ int executeCmd(char** params, int nparams)
         break;
     case PS:
         procdump();
-        print_procs();
+		switch (algorithm) {
+				case ROUNDROBIN:
+					print_procs();
+					break;
+				case FAIR:
+					break;
+		}
+
         break;
     case SCHEDULE:
         pid = local_scheduler(algorithm);

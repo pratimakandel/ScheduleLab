@@ -35,7 +35,7 @@ struct {
 
 // Initial process - ascendent of all other processes
 static struct proc *initproc;
-
+struct proc *head;
 // Used to allocate process ids - initproc is 1, others are incremented
 int nextpid = 1;
 
@@ -110,17 +110,15 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->next = NULL;
-  p->next = NULL;
+  p->prev = NULL;
   p->bursttime = (rand() % 10) + 1;
   p->arrivaltime = arrivalt++; 
-  //Seed generation
-  time_t t;
-  srand((unsigned) time(&t));
   
   //Assign niceness
   p->niceness = rand() % 40 - 20;
-
-
+  
+  //Assign time until completion
+  p->time_to_completion = rand() % 5 + 1;
 
   p->context = (struct context*)malloc(sizeof(struct context));
   memset(p->context, 0, sizeof *p->context);
@@ -361,66 +359,91 @@ scheduler(int algorithm)
 //  if(first_sched) first_sched = 0;
 //  else sti();
 
-  struct proc *p;
-  switch(algorithm) {  
-	case ROUNDROBIN:
-	//Replace this with the proper round robin code
-	
 int burst = 0;
   int new_burst = 0;
   struct proc *s = head;
-  if (s == NULL){
-        return;
-  }
-  //do{
-      burst = s->bursttime;
-      s-> state = RUNNING;
-      if(burst > QUANTUM){
-        new_burst = burst - QUANTUM;
-         s->bursttime = new_burst;
-         struct proc *d = s;
-         //enqueue_proc(s);
+
+  struct proc *p;
+  
+  
+  	//Pause current running process
+	acquire(&ptable.lock);
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if(p->state == RUNNING){
+			p->state = RUNNABLE;
+			break;
+		}
+	}
+	release(&ptable.lock);
+  
+  
+  
+  
+  switch(algorithm) {  
+	case ROUNDROBIN:	
+
+		if (s == NULL){
+				return;
+		}
+
+		burst = s->bursttime;
+		s-> state = RUNNING;
+		if(burst > QUANTUM){
+			new_burst = burst - QUANTUM;
+			s->bursttime = new_burst;
+			struct proc *d = s;
+			//enqueue_proc(s);
          
-         dequeue_proc();
-         //s->state = RUNNABLE;
-         s = s->next;
-         enqueue_proc(d);
+			dequeue_proc();
+			//s->state = RUNNABLE;
+			s = s->next;
+			enqueue_proc(d);
           
-       }else{
-          s->state = RUNNING;
-          dequeue_proc();
-          s=s->next;
-        }
-        //s = s->next;
+		}else{
+			s->state = RUNNING;
+			dequeue_proc();
+			s=s->next;
+			}
 	
   
-	case FAIR:
-		//Fair Scheduling
-		acquire(&ptable.lock);
+		case FAIR:
+			//Fair Scheduling
+			acquire(&ptable.lock);
 		
-		int nicest = LEAST_NICE;
+			int nicest = LEAST_NICE;
 		
-		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 				if(p->state != RUNNABLE)
 				continue;	
 
 				if (nicest > p->niceness)
 					nicest = p->niceness;
-		}
+			}
 		
-		printf("Nicest %d\n", nicest);
-		
-		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-			if(p->niceness == nicest) {
-				// Switch to chosen process.
-				curr_proc = p;
-				p->state = RUNNING;
-				break;
+			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+				if(p->niceness == nicest && p->state == RUNNABLE) {
+					// Switch to chosen process.
+					curr_proc = p;
+					p->state = RUNNING;
+					break;
+				}
+			}
+			release(&ptable.lock);
+			break;
+	}
+	
+	//Decrement Time To Completion
+	acquire(&ptable.lock);
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if(p->state == RUNNING) {
+			p->time_to_completion--;
+			if (p->time_to_completion <= 0) {
+				p->state = ZOMBIE;
 			}
 		}
-		release(&ptable.lock);
-		break;
-  }
+		
+	}
+	release(&ptable.lock);
 
 }
 
@@ -434,7 +457,7 @@ procdump(void)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->pid > 0)
-      printf("pid: %d, parent: %d state: %s, niceness: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness);
+      printf("pid: %d, parent: %d, state: %s, niceness: %d, time until completion: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness, p->time_to_completion);
 }
 
 void print_proc(struct proc *p) {
