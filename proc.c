@@ -191,11 +191,11 @@ int enqueue_proc(struct proc *p) {
 
             p->next = NULL;
         if (s->next == NULL){
-                printf("edit here");
+          
                 p->prev=s;
                 s->next=p;
         }else{
-                printf("or here");
+                
         while (s->next != NULL){
                 s = s->next;
 
