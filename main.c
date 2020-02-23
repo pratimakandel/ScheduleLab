@@ -19,8 +19,8 @@ int algorithm = 0; //0 = round robin, 1 = fair
 #define MAX_COMMAND_LENGTH 100
 #define MAX_NUMBER_OF_PARAMS 10
 
-enum cmds        { FORK=0, SETPID,   SHOWPID,   WAIT,   EXIT,   SLEEP,   WAKEUP,   PS,   SCHEDULE,  SETSCHEDULE, TIMER,    HELP,   QUIT };
-char *cmdstr[] = {"fork", "setpid", "currpid",  "wait", "exit", "sleep", "wakeup", "ps",   "schedule", "setschedule", "timer", "help", "quit"};
+enum cmds        { FORK=0, SETPID,   SHOWPID,   WAIT,   EXIT,   SLEEP,   WAKEUP,   PS, , SHOWSLEEP,   SCHEDULE,  SETSCHEDULE, TIMER,    HELP,   QUIT };
+char *cmdstr[] = {"fork", "setpid", "currpid",  "wait", "exit", "sleep", "wakeup", "ps",  "showsleep",  "schedule", "setschedule", "timer", "help", "quit"};
 
 int curr_proc_id = 0;
 
@@ -86,6 +86,9 @@ int executeCmd(char** params, int nparams)
 		
 			
         break;
+    case SHOWSLEEP:
+	show_sleep();
+        break;
     case SETPID:
         if (nparams == 1)
             printf("setpid cmd requires pid parameter\n");
@@ -139,12 +142,13 @@ int executeCmd(char** params, int nparams)
         }
         break;
     case PS:
-        procdump();
+        
 		switch (algorithm) {
 				case ROUNDROBIN:
 					print_procs();
 					break;
 				case FAIR:
+					procdump();
 					break;
 		}
 
@@ -174,10 +178,12 @@ int executeCmd(char** params, int nparams)
 			
 			if ((strcmp(params[1], "rr") == 0) || (strcmp(params[1], "0") == 0)) {
 					printf("Scheduling algorithm set to round robin.\n");
+					clear_rr();
 					algorithm = ROUNDROBIN;
 			}
 			else if (strcmp(params[1], "fair") == 0  || (strcmp(params[1], "1") == 0)) {
 					printf("Scheduling algorithm set to proportional share.\n");
+					clear_fair();
 					algorithm = FAIR;
 			}			
 		}
@@ -195,7 +201,7 @@ int executeCmd(char** params, int nparams)
         }
         break;
     case HELP:
-        printf("Commands: fork, setpid, currpid, currpid, wait, exit, sleep, wakeup, ps, schedule, setschedule, timer, help, quit\n");
+        printf("Commands: fork, setpid, currpid, currpid, wait, exit, ,showsleep, sleep, wakeup, ps, schedule, setschedule, timer, help, quit\n");
 		printf("Make sure you are using all lowercase!\n");
         break;
     case QUIT:
