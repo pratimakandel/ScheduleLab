@@ -19,7 +19,7 @@ int algorithm = 0; //0 = round robin, 1 = fair
 #define MAX_COMMAND_LENGTH 100
 #define MAX_NUMBER_OF_PARAMS 10
 
-enum cmds        { FORK=0, SETPID,   SHOWPID,   WAIT,   EXIT,   SLEEP,   WAKEUP,   PS, , SHOWSLEEP,   SCHEDULE,  SETSCHEDULE, TIMER,    HELP,   QUIT };
+enum cmds        { FORK=0, SETPID,   SHOWPID,   WAIT,   EXIT,   SLEEP,   WAKEUP,   PS, SHOWSLEEP,   SCHEDULE,  SETSCHEDULE, TIMER,    HELP,   QUIT };
 char *cmdstr[] = {"fork", "setpid", "currpid",  "wait", "exit", "sleep", "wakeup", "ps",  "showsleep",  "schedule", "setschedule", "timer", "help", "quit"};
 
 int curr_proc_id = 0;
