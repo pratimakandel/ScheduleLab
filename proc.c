@@ -57,7 +57,19 @@ pinit(void)
 {
   memset(&ptable, 0, sizeof(ptable));
 }
+//find proc for roundrobin
+static struct proc* find_proc(int pid) {
+    // design and implement this function
+   struct proc *p = head;
+   while(p != NULL){
+    if( p -> pid == pid){
+       return p;
+    }
+   p = p->next;
 
+   }
+    return 0;
+}
 // Look in the process table for a process id
 // If found, return pointer to proc
 // Otherwise return 0.
@@ -82,13 +94,35 @@ int dequeue_proc(){
            head = NULL;
            return 0;
         }else{
-        printf("dequeue\n");
         del = head;
         head = head -> next;
         head -> prev = NULL;
         return 1;
         }
 
+}
+
+//clear rr
+void clear_rr(){
+
+struct proc *s = head;
+while(s != NULL){
+       s->state = RUNNABLE;
+       s = s->next;
+}
+return;
+}
+
+//clear fair 
+void clear_fair(){
+
+struct proc *p;
+ for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNING | p->state == SLEEPING){
+        p->state = RUNNABLE;
+        }
+    }
+   return;
 }
 
 // Look in the process table for an UNUSED proc.
@@ -148,6 +182,10 @@ int enqueue_proc(struct proc *p) {
           return 0;
 }
     struct proc *s = head;
+	if(s == NULL){
+		head = p;
+		return 1;
+	}
 
             p->next = NULL;
         if (s->next == NULL){
@@ -191,10 +229,46 @@ Fork(int fork_proc_id)
   strcpy(np->cwd, fork_proc->cwd);
  
   pid = np->pid;
-  np->state = RUNNABLE;
+  struct proc *s = head;
+   if( s == NULL){
+	   np->state = RUNNING;
+   }else{
+  	np->state = RUNNABLE;
+   }
   strcpy(np->name, fork_proc->name);
   enqueue_proc(np);
   return pid;
+}
+
+//kill_rr for queue
+
+int kill_rr(int proc_id){
+
+
+  struct proc *s = find_proc(proc_id);
+    if(s == NULL){
+      return -1;
+   }
+   if(s->prev == NULL){
+      dequeue_proc();
+        return 0;
+    }
+
+   if( s->next != NULL){
+      struct proc *next = s->next;
+      struct proc *prev = s->prev;
+      prev->next = next;
+      next->prev = prev;
+
+   }else{
+      struct proc *prev = s->prev;
+      prev->next = NULL;
+    }
+
+ return 0;
+
+
+
 }
 
 // Exit the current process.  Does not return.
@@ -203,6 +277,7 @@ Fork(int fork_proc_id)
 int
 Exit(int exit_proc_id)
 {
+  kill_rr(exit_proc_id);
   struct proc *p, *exit_proc;
 
   // Find current proc
@@ -290,6 +365,7 @@ Wait(int wait_proc_id)
 int
 Sleep(int sleep_proc_id, int chan)
 {
+  kill_rr(sleep_proc_id);
   struct proc *sleep_proc;
   // Find current proc
   if ((sleep_proc = findproc(sleep_proc_id)) == 0)
@@ -300,6 +376,23 @@ Sleep(int sleep_proc_id, int chan)
   return sleep_proc_id;
 }
 
+//show the sleeping proc
+void show_sleep(){
+
+
+  struct proc *p;
+  bool t = false;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == SLEEPING){
+        printf("sleeping pid: %d chan: %d\n", p->pid, p->chan);
+        t = true;
+        }
+}
+if (t == false){
+printf("No Process in Sleep\n");
+}
+}
+
 // Wake up all processes sleeping on chan.
 // The ptable lock must be held.
 static void
@@ -308,8 +401,10 @@ wakeup1(int chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+      enqueue_proc(p);
+    }
 }
 
 
@@ -359,7 +454,7 @@ scheduler(int algorithm)
 //  if(first_sched) first_sched = 0;
 //  else sti();
 
-int burst = 0;
+  int burst = 0;
   int new_burst = 0;
   struct proc *s = head;
 
@@ -387,7 +482,7 @@ int burst = 0;
 		}
 
 		burst = s->bursttime;
-		s-> state = RUNNING;
+		s-> state = RUNNABLE;
 		if(burst > QUANTUM){
 			new_burst = burst - QUANTUM;
 			s->bursttime = new_burst;
@@ -396,14 +491,21 @@ int burst = 0;
          
 			dequeue_proc();
 			//s->state = RUNNABLE;
+			if(s->next != NULL){
 			s = s->next;
+			}
+			s->state = RUNNING;
 			enqueue_proc(d);
           
 		}else{
-			s->state = RUNNING;
+			
 			dequeue_proc();
+			if( s->next != NULL){
 			s=s->next;
 			}
+			}
+		        s->state = RUNNING;
+		break;
 	
   
 		case FAIR:
@@ -467,7 +569,6 @@ void print_proc(struct proc *p) {
 }
 
 void print_procs() {
-    printf("procs in queue:\n");
     struct proc *p = head;
     if( head == NULL){
         return;
