@@ -10,6 +10,8 @@
 #include "types.h"
 #include "defs.h"
 #include "proc.h"
+#include <stdbool.h>
+#include <time.h>
 
 static void wakeup1(int chan);
 int arrivalt = 1;
