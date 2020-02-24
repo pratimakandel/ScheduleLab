@@ -63,6 +63,6 @@ struct proc {
   struct proc *next;
   int bursttime;
   int arrivaltime;
-  unsigned int virtual_runtime;
+  unsigned int virtual_runtime;  //Used in fair scheduling. Once this reaches 0, the proc becomes a zombie.
 };
 

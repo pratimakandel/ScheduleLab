@@ -502,8 +502,9 @@ scheduler(int algorithm)
 
 			acquire(&ptable.lock);
 		
+			//Find the lowest nice value.
 			int nicest = LEAST_NICE;
-		
+			
 			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 				if(p->state != RUNNABLE)
 				continue;	
@@ -511,7 +512,8 @@ scheduler(int algorithm)
 				if (nicest > p->niceness)
 					nicest = p->niceness;
 			}
-		
+			
+			//Choose the process that has the lowest nice value
 			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 				if(p->niceness == nicest && p->state == RUNNABLE) {
 					// Switch to chosen process.
@@ -522,7 +524,7 @@ scheduler(int algorithm)
 			}
 			release(&ptable.lock);
 			
-			//Decrement Time To Completion
+			//Decrement Virtual Runtime
 			acquire(&ptable.lock);
 			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 				if(p->state == RUNNING) {
@@ -537,8 +539,6 @@ scheduler(int algorithm)
 			break;
 	}
 	
-
-
 }
 
 // Print a process listing to console.  For debugging.
