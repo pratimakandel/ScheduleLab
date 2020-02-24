@@ -63,6 +63,6 @@ struct proc {
   struct proc *next;
   int bursttime;
   int arrivaltime;
-  unsigned int time_to_completion;
+  unsigned int virtual_runtime;
 };
 

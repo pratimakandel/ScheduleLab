@@ -154,7 +154,7 @@ found:
   p->niceness = rand() % 40 - 20;
   
   //Assign time until completion
-  p->time_to_completion = rand() % 5 + 1;
+  p->virtual_runtime = rand() % 5 + 1;
 
   p->context = (struct context*)malloc(sizeof(struct context));
   memset(p->context, 0, sizeof *p->context);
@@ -463,19 +463,6 @@ scheduler(int algorithm)
   struct proc *p;
   
   
-  	//Pause current running process
-	acquire(&ptable.lock);
-	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-		if(p->state == RUNNING){
-			p->state = RUNNABLE;
-			break;
-		}
-	}
-	release(&ptable.lock);
-  
-  
-  
-  
   switch(algorithm) {  
 	case ROUNDROBIN:	
 
@@ -512,6 +499,19 @@ scheduler(int algorithm)
   
 		case FAIR:
 			//Fair Scheduling
+			
+			
+			//Pause current running process
+			acquire(&ptable.lock);
+			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+				if(p->state == RUNNING){
+					p->state = RUNNABLE;
+					break;
+				}
+			}
+			
+			release(&ptable.lock);
+
 			acquire(&ptable.lock);
 		
 			int nicest = LEAST_NICE;
@@ -533,21 +533,23 @@ scheduler(int algorithm)
 				}
 			}
 			release(&ptable.lock);
+			
+			//Decrement Time To Completion
+			acquire(&ptable.lock);
+			for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+				if(p->state == RUNNING) {
+					p->virtual_runtime--;
+					if (p->virtual_runtime <= 0) {
+						p->state = ZOMBIE;
+					}
+				}
+			}
+			release(&ptable.lock);
+			
 			break;
 	}
 	
-	//Decrement Time To Completion
-	acquire(&ptable.lock);
-	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-		if(p->state == RUNNING) {
-			p->time_to_completion--;
-			if (p->time_to_completion <= 0) {
-				p->state = ZOMBIE;
-			}
-		}
-		
-	}
-	release(&ptable.lock);
+
 
 }
 
@@ -561,7 +563,7 @@ procdump(void)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->pid > 0)
-      printf("pid: %d, parent: %d, state: %s, niceness: %d, time until completion: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness, p->time_to_completion);
+      printf("pid: %d, parent: %d, state: %s, niceness: %d, virtual runtime: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness, p->virtual_runtime);
 }
 
 void print_proc(struct proc *p) {
