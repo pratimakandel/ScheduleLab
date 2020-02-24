@@ -184,7 +184,6 @@ int executeCmd(char** params, int nparams)
 			}
 			else if (strcmp(params[1], "fair") == 0  || (strcmp(params[1], "1") == 0)) {
 					printf("Scheduling algorithm set to proportional share.\n");
-					//clear_fair();
 					algorithm = FAIR;
 			}			
 		}

@@ -115,18 +115,6 @@ while(s != NULL){
 return;
 }
 
-//clear fair 
-void clear_fair(){
-
-struct proc *p;
- for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state == RUNNING | p->state == SLEEPING){
-        p->state = RUNNABLE;
-        }
-    }
-   return;
-}
-
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
 // state required to run in the kernel.
