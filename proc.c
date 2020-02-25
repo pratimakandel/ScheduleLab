@@ -59,9 +59,11 @@ pinit(void)
 {
   memset(&ptable, 0, sizeof(ptable));
 }
-//find proc for roundrobin
+
+// Look in the queue for a process id
+// If found, return pointer to proc
+// Otherwise return 0.
 static struct proc* find_proc(int pid) {
-    // design and implement this function
    struct proc *p = head;
    while(p != NULL){
     if( p -> pid == pid){
