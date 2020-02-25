@@ -18,8 +18,7 @@ int             Sleep(int, int);
 void            Wakeup(int);
 void            print_procs();
 void            show_sleep();
-void             clear_rr();
-void             clear_fair();
+void            clear_rr();
 
 #define ROUNDROBIN 0
 #define FAIR 1

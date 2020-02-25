@@ -85,9 +85,11 @@ findproc(int pid)
       return p;
   return 0;
 }
+
+//reomve the process from  the front of the  queue
+//This is used for the Round Robin schedule algorithm
 int dequeue_proc(){
         struct proc *del;
-        //struct proc *s = head;
         if( head == NULL){
         return 0;
 
@@ -104,12 +106,18 @@ int dequeue_proc(){
 
 }
 
-//clear rr
+//changes front of the queue process's state to RUNNING and the others RUNNABLE 
+//This function is used when the schedule algorithm change from Fair to Round Robin 
+//Since RR have different Data structure and algorithm, by changing the state we can be more consitent with the RR's algorithm.
 void clear_rr(){
 
 struct proc *s = head;
-while(s != NULL){
-       s->state = RUNNABLE;
+if (s != NULL){
+
+	s->state = RUNNING;
+}
+while(s->next != NULL){
+       s->next->state = RUNNABLE;
        s = s->next;
 }
 return;
@@ -135,6 +143,7 @@ found:
   p->pid = nextpid++;
   p->next = NULL;
   p->prev = NULL;
+  //Assign burst time
   p->bursttime = (rand() % 10) + 1;
   p->arrivaltime = arrivalt++; 
   
@@ -167,6 +176,9 @@ userinit(void)
   head = curr_proc;
   return p->pid;
 }
+
+//inserts the queue at the end
+// This is used for the RR scheduling
 int enqueue_proc(struct proc *p) {
     if ( p == NULL){
           return 0;
@@ -226,11 +238,12 @@ Fork(int fork_proc_id)
   	np->state = RUNNABLE;
    }
   strcpy(np->name, fork_proc->name);
+  //enqueue the process
   enqueue_proc(np);
   return pid;
 }
 
-//kill_rr for queue
+//Removes the process from the queue if it finds the pid by using find_pid process.
 
 int kill_rr(int proc_id){
 
@@ -267,6 +280,8 @@ int kill_rr(int proc_id){
 int
 Exit(int exit_proc_id)
 {
+ 
+  //kills the process if it exists from the queue 
   kill_rr(exit_proc_id);
   struct proc *p, *exit_proc;
 
@@ -355,6 +370,7 @@ Wait(int wait_proc_id)
 int
 Sleep(int sleep_proc_id, int chan)
 {
+ //removes the pid from the queue if it exists
   kill_rr(sleep_proc_id);
   struct proc *sleep_proc;
   // Find current proc
@@ -367,6 +383,7 @@ Sleep(int sleep_proc_id, int chan)
 }
 
 //show the sleeping proc
+//Used for RR scheduling 
 void show_sleep(){
 
 
@@ -393,6 +410,7 @@ wakeup1(int chan)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+     //enqueue the sleeping proc
       enqueue_proc(p);
     }
 }
@@ -453,34 +471,36 @@ scheduler(int algorithm)
   
   switch(algorithm) {  
 	case ROUNDROBIN:	
-
+                //Round Robin
 		if (s == NULL){
-				return;
+			return;
 		}
 
 		burst = s->bursttime;
 		s-> state = RUNNABLE;
+		//check for the burst time
 		if(burst > QUANTUM){
 			new_burst = burst - QUANTUM;
 			s->bursttime = new_burst;
 			struct proc *d = s;
-			//enqueue_proc(s);
-         
+                        //dequeue proc
 			dequeue_proc();
-			//s->state = RUNNABLE;
 			if(s->next != NULL){
-			s = s->next;
+				s = s->next;
 			}
+			//change the next process schedule to running
 			s->state = RUNNING;
+			//enqueue proc
 			enqueue_proc(d);
           
 		}else{
 			
 			dequeue_proc();
 			if( s->next != NULL){
-			s=s->next;
+				s=s->next;
 			}
 			}
+			//change the next process schedule to running
 		        s->state = RUNNING;
 		break;
 	
@@ -554,12 +574,14 @@ procdump(void)
       printf("pid: %d, parent: %d, state: %s, niceness: %d, virtual runtime: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->niceness, p->virtual_runtime);
 }
 
+//Prints process from the queue 
 void print_proc(struct proc *p) {
     if (p == NULL)
         return;
     printf("pid: %d, parent: %d state: %s arrival time: %d burst time: %d\n", p->pid, p->parent == 0 ? 0 : p->parent->pid, procstatep[p->state], p->arrivaltime, p->bursttime);
 }
 
+//Prints process from the queue.
 void print_procs() {
     struct proc *p = head;
     if( head == NULL){

@@ -9,7 +9,7 @@
 #define PNAME        16  // chars in process name
 #define PGSIZE     4096  // size of initial pages for proc
 #define NCPU          8  // maximum number of CPUs
-#define QUANTUM       4
+#define QUANTUM       4  //maximum CPU usage given to each process in Round Robin algorithm 
 
 // Per-CPU state
 struct cpu {
@@ -58,11 +58,11 @@ struct proc {
   char ofiles[NFILE];          // Open files
   char cwd[CWD];               // Current directory
   char name[PNAME];            // Process name (debugging)
-  int niceness;					// A value from 20 to -19. Lower niceness is higher priority
-  struct proc *prev;
-  struct proc *next;
-  int bursttime;
-  int arrivaltime;
+  int niceness;			// A value from 20 to -19. Lower niceness is higher priority
+  struct proc *prev;            //doubly linked list previous node
+  struct proc *next;            //doubly linked list next node
+  int bursttime;                //burst time, time needed for the CPU Usage(RR schedule)
+  int arrivaltime;              //arrival time when the process is forked 
   unsigned int virtual_runtime;  //Used in fair scheduling. Once this reaches 0, the proc becomes a zombie.
 };
 
